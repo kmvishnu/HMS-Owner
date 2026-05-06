@@ -22,6 +22,8 @@ export const Rooms: React.FC = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { hotelId } = useHotel();
 
@@ -34,20 +36,101 @@ export const Rooms: React.FC = () => {
     enabled: !!hotelId
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data: any) => apiClient.post(`/hotel/${hotelId}/room-types`, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['room-types', hotelId] });
+      const newRoomId = response.data.data.id;
+      
+      if (selectedFile) {
+        uploadImageMutation.mutate({ id: newRoomId, file: selectedFile });
+      } else {
+        toast.success('Room type created');
+        setIsModalOpen(false);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create room type');
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: any }) => apiClient.put(`/hotel/${hotelId}/room-types/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['room-types', hotelId] });
+      toast.success('Room type updated');
+      setIsModalOpen(false);
+      setEditingRoom(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update room type');
+    }
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: ({ id, file }: { id: string, file: File }) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      return apiClient.post(`/hotel/${hotelId}/room-types/${id}/images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['room-types', hotelId] });
+      toast.success('Image uploaded');
+      if (!editingRoom) {
+        setIsModalOpen(false);
+        setSelectedFile(null);
+        setPreviewUrl(null);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to upload image');
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/hotel/${hotelId}/room-types/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['room-types'] });
+      queryClient.invalidateQueries({ queryKey: ['room-types', hotelId] });
       toast.success('Room type deleted');
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In real app, call API
-    toast.success(editingRoom ? 'Room updated' : 'Room created');
-    setIsModalOpen(false);
-    setEditingRoom(null);
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name'),
+      price: parseFloat(formData.get('price') as string),
+      totalRooms: parseInt(formData.get('totalRooms') as string),
+    };
+
+    if (editingRoom) {
+      updateMutation.mutate({ id: editingRoom.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleImageUpload = (id: string | null, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (id) {
+        uploadImageMutation.mutate({ id, file });
+      } else {
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+      }
+    }
+  };
+
+  const getImageUrl = (room: any) => {
+    if (room.images?.[0]) {
+      return typeof room.images[0] === 'string' ? room.images[0] : room.images[0].url;
+    }
+    if (room.image_urls?.[0]) return room.image_urls[0];
+    return null;
   };
 
   if (isLoading) return <div>Loading...</div>;
@@ -70,8 +153,14 @@ export const Rooms: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {roomTypes?.map((room: any) => (
           <Card key={room.id} className="group relative overflow-hidden flex flex-col">
-            <div className="h-48 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 flex items-center justify-center text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
-              <ImageIcon size={48} />
+            <div className="h-48 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 relative overflow-hidden group">
+              {getImageUrl(room) ? (
+                <img src={getImageUrl(room)!} alt={room.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                  <ImageIcon size={48} />
+                </div>
+              )}
             </div>
             
             <div className="flex-1">
@@ -122,8 +211,13 @@ export const Rooms: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <Card className="w-full max-w-lg relative animate-in fade-in zoom-in duration-200">
             <button 
-              onClick={() => { setIsModalOpen(false); setEditingRoom(null); }}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              onClick={() => { 
+                setIsModalOpen(false); 
+                setEditingRoom(null); 
+                setSelectedFile(null);
+                setPreviewUrl(null);
+              }}
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-white z-10"
             >
               <X size={20} />
             </button>
@@ -133,32 +227,75 @@ export const Rooms: React.FC = () => {
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Input label="Room Name" placeholder="e.g. Deluxe Suite" defaultValue={editingRoom?.name} required />
+              <Input label="Room Name" name="name" placeholder="e.g. Deluxe Suite" defaultValue={editingRoom?.name} required />
               <div className="grid grid-cols-2 gap-4">
-                <Input label="Price ($)" type="number" placeholder="150" defaultValue={editingRoom?.price} required />
-                <Input label="Total Rooms" type="number" placeholder="10" defaultValue={editingRoom?.totalRooms} required />
+                <Input label="Price ($)" name="price" type="number" placeholder="150" defaultValue={editingRoom?.price} required />
+                <Input label="Total Rooms" name="totalRooms" type="number" placeholder="10" defaultValue={editingRoom?.totalRooms} required />
               </div>
               
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Room Images (Max 3)</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="h-24 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 hover:border-primary transition-colors cursor-pointer">
-                    <Upload size={20} />
-                    <span className="text-[10px] mt-1">Upload</span>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Room Images (Max 3)</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Existing Images */}
+                    {editingRoom?.images?.map((img: any) => (
+                      <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 group">
+                        <img src={typeof img === 'string' ? img : img.url} alt="Room" className="w-full h-full object-cover" />
+                        <button 
+                          type="button"
+                          onClick={() => apiClient.delete(`/hotel/${hotelId}/room-types/images/${img.id || img}`).then(() => queryClient.invalidateQueries({ queryKey: ['room-types', hotelId] }))}
+                          className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-md shadow-lg hover:bg-red-600 transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Local Preview for new room */}
+                    {!editingRoom && previewUrl && (
+                      <div className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 group">
+                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          type="button"
+                          onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
+                          className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-md shadow-lg hover:bg-red-600 transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Upload Box */}
+                    {((editingRoom?.images?.length || 0) + (previewUrl ? 1 : 0)) < 3 && (
+                      <label className="h-24 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 hover:border-primary transition-colors cursor-pointer relative">
+                        <input 
+                          type="file" 
+                          className="absolute inset-0 opacity-0 cursor-pointer" 
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(editingRoom?.id || null, e)}
+                        />
+                        <Upload size={20} />
+                        <span className="text-[10px] mt-1">Upload</span>
+                      </label>
+                    )}
                   </div>
+                  {!editingRoom && <p className="text-[10px] text-slate-500">Image will be uploaded after creating the room type.</p>}
                 </div>
-              </div>
 
               <div className="flex gap-3 pt-4">
                 <Button 
                   type="button" 
                   variant="outline" 
                   className="flex-1" 
-                  onClick={() => { setIsModalOpen(false); setEditingRoom(null); }}
+                  onClick={() => { 
+                    setIsModalOpen(false); 
+                    setEditingRoom(null); 
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
+                  }}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1">
+                <Button type="submit" className="flex-1" isLoading={createMutation.isPending || updateMutation.isPending}>
                   {editingRoom ? 'Save Changes' : 'Create Room'}
                 </Button>
               </div>

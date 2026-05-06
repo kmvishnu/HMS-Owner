@@ -37,11 +37,17 @@ apiClient.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post('http://localhost:8081/auth/refresh', {}, {
+        const response = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, { refreshToken }, {
           headers: { 'x-refresh-token': refreshToken }
         });
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
+        const responseData = response.data.data || response.data;
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = responseData;
+        
+        if (!newAccessToken || !newRefreshToken) {
+          throw new Error('Refresh token response missing tokens');
+        }
+
         setTokens(newAccessToken, newRefreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

@@ -14,6 +14,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { setLastHotelId } = useAuthStore();
+  
+  useEffect(() => {
+    if (hotelId) {
+      setLastHotelId(hotelId);
+    }
+  }, [hotelId, setLastHotelId]);
+
   useEffect(() => {
     if (user?.role === 'HOTEL_STAFF' && !location.pathname.startsWith('/hotel/')) {
        // Only if they aren't on a valid hotel path

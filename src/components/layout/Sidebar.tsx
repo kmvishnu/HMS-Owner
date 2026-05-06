@@ -21,10 +21,11 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
-  const { user } = useAuthStore();
+  const { user, lastHotelId } = useAuthStore();
   const role = user?.role || 'HOTEL_STAFF';
 
-  const { hotelId } = useParams<{ hotelId: string }>();
+  const { hotelId: urlHotelId } = useParams<{ hotelId: string }>();
+  const hotelId = urlHotelId || lastHotelId;
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: `/hotel/${hotelId}/dashboard`, permission: 'view_bookings', isScoped: true },
@@ -38,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
   return (
     <aside 
       className={clsx(
-        "fixed inset-y-0 left-0 lg:relative h-screen glass-card !rounded-none border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50",
+        "fixed inset-y-0 left-0 lg:sticky lg:top-0 h-screen glass-card !rounded-none border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50",
         isOpen ? "w-64 translate-x-0" : "w-20 -translate-x-full lg:translate-x-0"
       )}
     >
