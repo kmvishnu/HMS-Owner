@@ -15,8 +15,10 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, isDarkMode, toggl
   const location = useLocation();
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    if (window.confirm('Are you sure you want to logout?')) {
+      logout();
+      navigate('/login');
+    }
   };
 
   return (
@@ -39,10 +41,10 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, isDarkMode, toggl
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        <button className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+        {/* <button className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
           <Bell size={20} />
           <span className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-white dark:border-slate-900"></span>
-        </button>
+        </button> */}
 
         <div className="h-10 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2"></div>
 

@@ -1,13 +1,16 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Building, MapPin } from 'lucide-react';
+import { Building, MapPin, Eye, EyeOff } from 'lucide-react';
 import { Card, Button, Badge } from '../../components/ui';
 import apiClient from '../../api/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 
 export const HotelList: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: hotels, isLoading } = useQuery({
     queryKey: ['owner-hotels'],
@@ -16,6 +19,26 @@ export const HotelList: React.FC = () => {
       return response.data.data || response.data; // Accommodate generic wrapping
     }
   });
+
+  const visibilityMutation = useMutation({
+    mutationFn: ({ hotelId, isVisible }: { hotelId: number; isVisible: boolean }) => 
+      apiClient.put(`/hotel/${hotelId}/visibility`, { isVisible }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owner-hotels'] });
+      toast.success('Visibility updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update visibility');
+    }
+  });
+
+  const toggleVisibility = (e: React.MouseEvent, hotelId: number, currentVisibility: boolean) => {
+    e.stopPropagation();
+    const action = currentVisibility ? 'hide' : 'make live';
+    if (window.confirm(`Are you sure you want to ${action} this hotel?`)) {
+      visibilityMutation.mutate({ hotelId, isVisible: !currentVisibility });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -57,8 +80,14 @@ export const HotelList: React.FC = () => {
                 </div>
               )}
               
-              {/* Status Badge */}
               <div className="absolute top-3 right-3 flex gap-2">
+                <button 
+                  onClick={(e) => toggleVisibility(e, hotel.id, hotel.is_visible)}
+                  className="p-1.5 rounded-lg backdrop-blur-md bg-white/20 hover:bg-white/40 text-white transition-colors border border-white/20"
+                  title={hotel.is_visible ? "Make Hidden" : "Go Live"}
+                >
+                  {hotel.is_visible ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
                 {!hotel.is_visible && (
                   <Badge variant="warning" className="shadow-lg backdrop-blur-md bg-amber-500/90 text-white">Hidden</Badge>
                 )}

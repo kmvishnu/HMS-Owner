@@ -97,6 +97,12 @@ export const Rooms: React.FC = () => {
     }
   });
 
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this room type? This action cannot be undone.')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -168,11 +174,11 @@ export const Rooms: React.FC = () => {
               <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-500 flex items-center gap-1.5"><DollarSign size={14} /> Price per night</span>
-                  <span className="font-bold text-primary">${room.price}</span>
+                  <span className="font-bold text-primary">₹{room.price}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-500 flex items-center gap-1.5"><Hash size={14} /> Total Inventory</span>
-                  <span className="font-bold dark:text-white">{room.totalRooms} Rooms</span>
+                  <span className="font-bold dark:text-white">{room.totalRooms ?? room.total_rooms} Rooms</span>
                 </div>
               </div>
             </div>
@@ -195,7 +201,7 @@ export const Rooms: React.FC = () => {
                   variant="outline" 
                   size="sm" 
                   className="flex-1 gap-1.5 text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/30"
-                  onClick={() => deleteMutation.mutate(room.id)}
+                  onClick={() => handleDelete(room.id)}
                 >
                   <Trash2 size={14} />
                   Delete
@@ -229,8 +235,8 @@ export const Rooms: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input label="Room Name" name="name" placeholder="e.g. Deluxe Suite" defaultValue={editingRoom?.name} required />
               <div className="grid grid-cols-2 gap-4">
-                <Input label="Price ($)" name="price" type="number" placeholder="150" defaultValue={editingRoom?.price} required />
-                <Input label="Total Rooms" name="totalRooms" type="number" placeholder="10" defaultValue={editingRoom?.totalRooms} required />
+                <Input label="Price (₹)" name="price" type="number" placeholder="150" defaultValue={editingRoom?.price} required />
+                <Input label="Total Rooms" name="totalRooms" type="number" placeholder="10" defaultValue={editingRoom?.totalRooms ?? editingRoom?.total_rooms} required />
               </div>
               
                 <div className="space-y-2">

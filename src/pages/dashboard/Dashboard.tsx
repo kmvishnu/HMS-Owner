@@ -8,15 +8,20 @@ import {
   ArrowUpRight,
   Plus,
   CheckCircle2,
-  Ban
+  Ban,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Card, Button, Badge } from '../../components/ui';
 import apiClient from '../../api/client';
 import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 export const Dashboard: React.FC = () => {
   const { hotelId } = useHotel();
+  const queryClient = useQueryClient();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard', hotelId],
@@ -26,6 +31,26 @@ export const Dashboard: React.FC = () => {
     },
     enabled: !!hotelId
   });
+
+  const visibilityMutation = useMutation({
+    mutationFn: ({ id, isVisible }: { id: number; isVisible: boolean }) => 
+      apiClient.put(`/hotel/${id}/visibility`, { isVisible }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success('Visibility updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update visibility');
+    }
+  });
+
+  const toggleVisibility = (e: React.MouseEvent, id: number, currentVisibility: boolean) => {
+    e.stopPropagation();
+    const action = currentVisibility ? 'hide' : 'make live';
+    if (window.confirm(`Are you sure you want to ${action} this hotel?`)) {
+      visibilityMutation.mutate({ id, isVisible: !currentVisibility });
+    }
+  };
 
   const stats = [
     { label: 'Total Rooms', value: dashboardData?.occupancy?.totalRooms || 0, icon: BedDouble, color: 'text-blue-500' },
@@ -61,11 +86,21 @@ export const Dashboard: React.FC = () => {
                     <Plus size={48} />
                   </div>
                 )}
-                {!hotel.is_visible && (
-                  <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button 
+                    onClick={(e) => toggleVisibility(e, hotel.id, hotel.is_visible)}
+                    className="p-1.5 rounded-lg backdrop-blur-md bg-white/20 hover:bg-white/40 text-white transition-colors border border-white/20"
+                    title={hotel.is_visible ? "Make Hidden" : "Go Live"}
+                  >
+                    {hotel.is_visible ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                  {!hotel.is_visible && (
                     <Badge variant="warning">Hidden</Badge>
-                  </div>
-                )}
+                  )}
+                  {hotel.is_visible && (
+                    <Badge variant="success">Live</Badge>
+                  )}
+                </div>
               </div>
               <h3 className="text-xl font-bold dark:text-white group-hover:text-primary transition-colors">{hotel.name}</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{hotel.location}</p>
@@ -134,10 +169,10 @@ export const Dashboard: React.FC = () => {
               <div key={booking.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    {booking.guest.charAt(0)}
+                    {booking.customer_name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-bold dark:text-white">{booking.guest}</p>
+                    <p className="font-bold dark:text-white">{booking.customer_name}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{booking.room} • Arrived at {booking.time}</p>
                   </div>
                 </div>

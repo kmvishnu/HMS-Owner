@@ -150,7 +150,7 @@ export const Bookings: React.FC = () => {
                     {getStatusBadge(booking.status)}
                   </td>
                   <td className="px-6 py-4 font-bold dark:text-white">
-                    ${booking.price}
+                    ₹{booking.price}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
