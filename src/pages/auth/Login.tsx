@@ -21,7 +21,7 @@ export const Login: React.FC = () => {
     try {
       const response = await apiClient.post('/auth/login', { email, password });
       const { user, accessToken, refreshToken } = response.data.data;
-      
+
       setAuth(user, accessToken, refreshToken);
       toast.success(`Welcome back, ${user.name}!`);
       if (user.role === 'HOTEL_OWNER') {
@@ -45,7 +45,7 @@ export const Login: React.FC = () => {
       {/* Background Orbs */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-[100px]" />
       <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/20 rounded-full blur-[100px]" />
-      
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ export const Login: React.FC = () => {
           <div className="inline-flex w-16 h-16 bg-gradient-futuristic rounded-2xl items-center justify-center text-white shadow-glow mb-4">
             <Hotel size={32} />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">StayFlow</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">BookMyStay HMS</h1>
           <p className="text-slate-400 mt-2">Manage your hotel with ease</p>
         </div>
 
@@ -105,9 +105,9 @@ export const Login: React.FC = () => {
         </Card>
 
         <p className="text-center mt-8 text-slate-500 text-sm">
-          Protected by enterprise-grade security. 
+          Protected by enterprise-grade security.
           <br />
-          &copy; 2026 StayFlow Systems.
+          &copy; 2026 BookMyStay HMS.
         </p>
       </motion.div>
     </div>

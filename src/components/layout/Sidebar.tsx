@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  CalendarCheck, 
-  BedDouble, 
-  Users, 
-  Settings, 
+import {
+  LayoutDashboard,
+  CalendarCheck,
+  BedDouble,
+  Users,
+  Settings,
   Package,
   ChevronLeft,
   ChevronRight,
@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
   ].filter(item => hasPermission(role, item.permission as any) && (!item.isScoped || hotelId));
 
   return (
-    <aside 
+    <aside
       className={clsx(
         "fixed inset-y-0 left-0 lg:sticky lg:top-0 h-screen glass-card !rounded-none border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50",
         isOpen ? "w-64 translate-x-0" : "w-20 -translate-x-full lg:translate-x-0"
@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
         </div>
         {isOpen && (
           <span className="font-bold text-xl tracking-tight bg-gradient-futuristic bg-clip-text text-transparent">
-            StayFlow
+            BookMyStay HMS
           </span>
         )}
       </div>
@@ -61,8 +61,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
             to={item.path}
             className={({ isActive }) => clsx(
               "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
-              isActive 
-                ? "bg-primary text-white shadow-glow" 
+              isActive
+                ? "bg-primary text-white shadow-glow"
                 : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
             )}
           >
@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
       </nav>
 
       <div className="p-4">
-        <button 
+        <button
           onClick={toggle}
           className="w-full flex items-center justify-center p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
