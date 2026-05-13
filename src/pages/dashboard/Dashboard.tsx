@@ -1,229 +1,184 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  BedDouble, 
-  CalendarCheck, 
-  TrendingUp, 
-  Clock,
-  ArrowUpRight,
-  Plus,
-  CheckCircle2,
-  Ban,
-  Eye,
-  EyeOff
-} from 'lucide-react';
-import { Card, Button, Badge } from '../../components/ui';
-import apiClient from '../../api/client';
-import { useHotel } from '../../context/HotelContext';
 import { motion } from 'framer-motion';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { AlertTriangle, Info, Plus, ArrowRight } from 'lucide-react';
+import { Card, Button, Badge, Skeleton } from '../../components/ui';
+import { DashboardCards } from '../../components/hotel/DashboardCards';
+import { useHotel } from '../../context/HotelContext';
+import { useHotelDashboard } from '../../hooks/useHotelHooks';
+import { Link } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
   const { hotelId } = useHotel();
-  const queryClient = useQueryClient();
+  const safeHotelId = hotelId || '';
+  const { data: dashboardData, isLoading, error } = useHotelDashboard(safeHotelId);
 
-  const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard', hotelId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/hotel/${hotelId}/dashboard`);
-      return response.data.data;
-    },
-    enabled: !!hotelId
-  });
-
-  const visibilityMutation = useMutation({
-    mutationFn: ({ id, isVisible }: { id: number; isVisible: boolean }) => 
-      apiClient.put(`/hotel/${id}/visibility`, { isVisible }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Visibility updated');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update visibility');
-    }
-  });
-
-  const toggleVisibility = (e: React.MouseEvent, id: number, currentVisibility: boolean) => {
-    e.stopPropagation();
-    const action = currentVisibility ? 'hide' : 'make live';
-    if (window.confirm(`Are you sure you want to ${action} this hotel?`)) {
-      visibilityMutation.mutate({ id, isVisible: !currentVisibility });
-    }
-  };
-
-  const stats = [
-    { label: 'Total Rooms', value: dashboardData?.occupancy?.totalRooms || 0, icon: BedDouble, color: 'text-blue-500' },
-    { label: 'Booked Today', value: dashboardData?.occupancy?.bookedToday || 0, icon: CalendarCheck, color: 'text-green-500' },
-    { label: 'Occupancy Rate', value: `${Math.round(((dashboardData?.occupancy?.bookedToday || 0) / (dashboardData?.occupancy?.totalRooms || 1)) * 100)}%`, icon: TrendingUp, color: 'text-purple-500' },
-    { label: 'Check-ins Due', value: 4, icon: Clock, color: 'text-amber-500' },
-  ];
-
-  if (isLoading) return <div className="animate-pulse space-y-8">
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl" />)}
-    </div>
-    <div className="h-96 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-  </div>;
-
-  // If the owner has multiple hotels and hasn't selected one
-  if (dashboardData?.ownedHotels && !dashboardData?.occupancy) {
+  if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold dark:text-white">Your Hotels</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Select a hotel to manage</p>
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-32" />
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardData.ownedHotels.map((hotel: any) => (
-            <Card key={hotel.id} className="hover:scale-[1.02] transition-transform cursor-pointer group">
-              <div className="aspect-video rounded-xl bg-slate-100 dark:bg-slate-800 mb-4 overflow-hidden relative">
-                {hotel.image_urls?.[0] ? (
-                  <img src={hotel.image_urls[0]} alt={hotel.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    <Plus size={48} />
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <button 
-                    onClick={(e) => toggleVisibility(e, hotel.id, hotel.is_visible)}
-                    className="p-1.5 rounded-lg backdrop-blur-md bg-white/20 hover:bg-white/40 text-white transition-colors border border-white/20"
-                    title={hotel.is_visible ? "Make Hidden" : "Go Live"}
-                  >
-                    {hotel.is_visible ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                  {!hotel.is_visible && (
-                    <Badge variant="warning">Hidden</Badge>
-                  )}
-                  {hotel.is_visible && (
-                    <Badge variant="success">Live</Badge>
-                  )}
-                </div>
-              </div>
-              <h3 className="text-xl font-bold dark:text-white group-hover:text-primary transition-colors">{hotel.name}</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{hotel.location}</p>
-              <Button className="w-full mt-6">Manage Hotel</Button>
-            </Card>
-          ))}
+        <DashboardCards checkIns={0} checkOuts={0} occupancyRate={0} isLoading />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Skeleton className="lg:col-span-2 h-96" />
+          <Skeleton className="h-96" />
         </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-full text-red-500">
+          <AlertTriangle size={48} />
+        </div>
+        <h2 className="text-2xl font-bold dark:text-white">Failed to load dashboard</h2>
+        <p className="text-slate-500">Please check your connection or try again later.</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold dark:text-white">Dashboard Overview</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Real-time performance and operations</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Real-time operational insights</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="gap-2">
-            <Plus size={18} />
-            Quick Action
-          </Button>
+        <Link to="/rooms">
           <Button className="gap-2">
-            <CheckCircle2 size={18} />
-            Check-in Guest
+            <Plus size={18} />
+            Manage Rooms
           </Button>
-        </div>
+        </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-          >
-            <Card className="flex items-center justify-between hover:scale-[1.02] transition-transform cursor-pointer">
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
-                <h3 className="text-2xl font-bold dark:text-white mt-1">{stat.value}</h3>
-                <div className="flex items-center gap-1 mt-2 text-xs text-green-500 font-medium">
-                  <ArrowUpRight size={14} />
-                  <span>+12% from yesterday</span>
-                </div>
+      {/* Alerts */}
+      {dashboardData?.alerts && dashboardData.alerts.length > 0 && (
+        <div className="space-y-3">
+          {dashboardData.alerts.map((alert, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={`flex items-center gap-3 p-4 rounded-2xl border ${
+                alert.type === 'OVERBOOKED' 
+                  ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20 text-red-700 dark:text-red-400' 
+                  : 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20 text-amber-700 dark:text-amber-400'
+              }`}
+            >
+              <div className={alert.type === 'OVERBOOKED' ? 'text-red-500' : 'text-amber-500'}>
+                {alert.type === 'OVERBOOKED' ? <AlertTriangle size={20} /> : <Info size={20} />}
               </div>
-              <div className={`p-4 rounded-xl bg-slate-100 dark:bg-slate-800 ${stat.color}`}>
-                <stat.icon size={24} />
-              </div>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+              <p className="text-sm font-bold tracking-tight">{alert.message}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      <DashboardCards 
+        checkIns={dashboardData?.todayCheckIns || 0} 
+        checkOuts={dashboardData?.todayCheckOuts || 0} 
+        occupancyRate={dashboardData?.occupancy?.occupancyRate || 0} 
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Today's Bookings */}
-        <Card className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold dark:text-white">Today's Bookings</h3>
-            <Button variant="ghost" size="sm">View All</Button>
+        {/* Main Operational Card */}
+        <Card className="lg:col-span-2 overflow-hidden !p-0">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 className="text-xl font-bold dark:text-white">Occupancy Breakdown</h3>
+            <Link to="/inventory">
+              <Button variant="ghost" size="sm" className="gap-2">
+                Full Calendar <ArrowRight size={16} />
+              </Button>
+            </Link>
           </div>
-          <div className="space-y-4">
-            {dashboardData?.todayBookings?.map((booking: any) => (
-              <div key={booking.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    {booking.customer_name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-bold dark:text-white">{booking.customer_name}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{booking.room} • Arrived at {booking.time}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Badge variant={booking.status === 'CHECKED_IN' ? 'success' : 'info'}>
-                    {booking.status}
-                  </Badge>
-                  <Button variant="outline" size="sm">Manage</Button>
-                </div>
+          <div className="p-8 space-y-8">
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-500 uppercase tracking-widest mb-1">Live Occupancy</p>
+                <h4 className="text-5xl font-black dark:text-white">
+                  {Math.round(dashboardData?.occupancy?.occupancyRate || 0)}%
+                </h4>
               </div>
-            ))}
-            {!dashboardData?.todayBookings?.length && (
-              <div className="py-8 text-center text-slate-500">No bookings for today.</div>
-            )}
+              <div className="text-right">
+                <p className="text-sm font-bold dark:text-white">
+                  {dashboardData?.occupancy?.bookedToday} / {dashboardData?.occupancy?.totalRooms}
+                </p>
+                <p className="text-xs text-slate-500">Rooms Booked Today</p>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${dashboardData?.occupancy?.occupancyRate || 0}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="h-full bg-gradient-to-r from-primary to-accent"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/50">
+                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Available</p>
+                <p className="text-xl font-bold dark:text-white">
+                  {(dashboardData?.occupancy?.totalRooms || 0) - (dashboardData?.occupancy?.bookedToday || 0)}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/50">
+                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Check-ins</p>
+                <p className="text-xl font-bold dark:text-white">{dashboardData?.todayCheckIns}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/50">
+                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Check-outs</p>
+                <p className="text-xl font-bold dark:text-white">{dashboardData?.todayCheckOuts}</p>
+              </div>
+            </div>
           </div>
         </Card>
 
-        {/* Quick Actions & Upcoming */}
-        <div className="space-y-8">
-          <Card className="!bg-primary/5 border-primary/20">
-            <h3 className="text-lg font-bold dark:text-white mb-4">Quick Operations</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="flex-col gap-2 h-24 dark:bg-slate-900/50">
-                <Plus size={20} />
-                <span>Add Room</span>
-              </Button>
-              <Button variant="outline" className="flex-col gap-2 h-24 dark:bg-slate-900/50">
-                <Ban size={20} />
-                <span>Block Rooms</span>
-              </Button>
-            </div>
-          </Card>
-
-          <Card>
-            <h3 className="text-lg font-bold dark:text-white mb-4">Upcoming Arrivals</h3>
-            <div className="space-y-4">
-              {dashboardData?.upcomingBookings?.map((booking: any) => (
-                <div key={booking.id} className="flex items-center gap-3">
-                  <div className="w-1 h-8 bg-accent rounded-full" />
-                  <div>
-                    <p className="text-sm font-bold dark:text-white">{booking.guest}</p>
-                    <p className="text-xs text-slate-500">{booking.date} • {booking.room}</p>
+        {/* Upcoming Arrivals Side Card */}
+        <Card className="flex flex-col">
+          <h3 className="text-xl font-bold dark:text-white mb-6">Upcoming Arrivals</h3>
+          <div className="space-y-6 flex-1">
+            {dashboardData?.upcomingBookings?.length ? (
+              dashboardData.upcomingBookings.slice(0, 5).map((booking) => (
+                <div key={booking.id} className="flex items-center gap-4 group">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center group-hover:bg-primary/10 transition-colors">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                      {new Date(booking.checkIn).toLocaleDateString('en-US', { month: 'short' })}
+                    </span>
+                    <span className="text-sm font-black dark:text-white group-hover:text-primary transition-colors">
+                      {new Date(booking.checkIn).toLocaleDateString('en-US', { day: '2-digit' })}
+                    </span>
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold dark:text-white truncate">{booking.guestName}</p>
+                    <p className="text-xs text-slate-500 truncate">{booking.roomType}</p>
+                  </div>
+                  <Badge variant="info" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    View
+                  </Badge>
                 </div>
-              ))}
-              {!dashboardData?.upcomingBookings?.length && (
-                <div className="py-4 text-center text-slate-500 text-sm">No upcoming arrivals.</div>
-              )}
-            </div>
-          </Card>
-        </div>
+              ))
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-2 opacity-50">
+                <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full">
+                  <Info size={24} />
+                </div>
+                <p className="text-sm font-medium">No upcoming arrivals</p>
+              </div>
+            )}
+          </div>
+          <Link to="/bookings?filter=upcoming" className="mt-8">
+            <Button variant="outline" className="w-full">See All Bookings</Button>
+          </Link>
+        </Card>
       </div>
     </div>
   );

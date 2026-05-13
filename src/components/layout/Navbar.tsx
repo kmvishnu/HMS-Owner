@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sun, Bell, User, LogOut, Menu, Building } from 'lucide-react';
+import { Moon, Sun, User, LogOut, Menu, Building } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 

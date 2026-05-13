@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const apiClient = axios.create({
-    baseURL: 'https://hms-server-mu.vercel.app',
+    baseURL: 'http://localhost:8081',
   headers: {
     'Content-Type': 'application/json',
   },
