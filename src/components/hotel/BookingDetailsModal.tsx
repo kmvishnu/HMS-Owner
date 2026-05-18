@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import type { Booking } from '../../types/hotel';
 import { Modal, Button, Badge } from '../ui';
-import { Calendar, CreditCard, MessageSquare, Clock } from 'lucide-react';
-import { useUpdateBookingNotes } from '../../hooks/useHotelHooks';
+import { Calendar, CreditCard, MessageSquare, Clock, LogIn, LogOut } from 'lucide-react';
+import { useUpdateBookingNotes, useCheckIn, useCheckOut } from '../../hooks/useHotelHooks';
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  booking: Booking | null;
+  booking: any | null; // Changed to any to handle mapped properties if needed
   hotelId: string;
 }
 
@@ -19,6 +18,8 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
 }) => {
   const [notes, setNotes] = useState(booking?.notes || '');
   const updateNotes = useUpdateBookingNotes(hotelId);
+  const checkInMutation = useCheckIn(hotelId);
+  const checkOutMutation = useCheckOut(hotelId);
 
   useEffect(() => {
     if (booking) setNotes(booking.notes || '');
@@ -29,6 +30,10 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
   const calculateNights = (checkIn: string, checkOut: string) => {
     const nights = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24);
     return Math.max(1, Math.round(nights));
+  };
+
+  const isExpired = (checkOutDate: string) => {
+    return new Date(checkOutDate).getTime() < new Date().getTime();
   };
 
   const nights = calculateNights(booking.checkIn, booking.checkOut);
@@ -51,13 +56,38 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
               <p className="text-slate-500 text-sm">{booking.userEmail}</p>
             </div>
           </div>
-          <Badge variant={
-            booking.status === 'CHECKED_IN' ? 'success' : 
-            booking.status === 'CONFIRMED' ? 'info' : 
-            booking.status === 'CHECKED_OUT' ? 'neutral' : 'error'
-          }>
-            {booking.status}
-          </Badge>
+          <div className="flex items-center gap-3">
+            {booking.status === 'CONFIRMED' && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="gap-2 text-emerald-600 border-emerald-100 hover:bg-emerald-50"
+                onClick={() => checkInMutation.mutate(booking.id)}
+                isLoading={checkInMutation.isPending}
+              >
+                <LogIn size={16} /> Check In
+              </Button>
+            )}
+            {booking.status === 'CHECKED_IN' && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className={`gap-2 ${isExpired(booking.checkOut) ? 'text-red-600 border-red-100 bg-red-50 hover:bg-red-100 animate-pulse' : 'text-blue-600 border-blue-100 hover:bg-blue-50'}`}
+                onClick={() => checkOutMutation.mutate(booking.id)}
+                isLoading={checkOutMutation.isPending}
+                title={isExpired(booking.checkOut) ? 'Stay expired - please check out' : ''}
+              >
+                <LogOut size={16} /> Check Out
+              </Button>
+            )}
+            <Badge variant={
+              booking.status === 'CHECKED_IN' ? 'success' : 
+              booking.status === 'CONFIRMED' ? 'info' : 
+              booking.status === 'CHECKED_OUT' ? 'neutral' : 'error'
+            }>
+              {booking.status}
+            </Badge>
+          </div>
         </div>
 
         {/* Stay Details */}

@@ -36,6 +36,36 @@ export const useUpdateBookingNotes = (hotelId: string) => {
   });
 };
 
+export const useCheckIn = (hotelId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (bookingId: string) => hotelApi.checkIn(hotelId, bookingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hotel-bookings', hotelId] });
+      queryClient.invalidateQueries({ queryKey: ['hotel-dashboard', hotelId] });
+      toast.success('Guest checked in successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to check in guest');
+    }
+  });
+};
+
+export const useCheckOut = (hotelId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (bookingId: string) => hotelApi.checkOut(hotelId, bookingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hotel-bookings', hotelId] });
+      queryClient.invalidateQueries({ queryKey: ['hotel-dashboard', hotelId] });
+      toast.success('Guest checked out successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to check out guest');
+    }
+  });
+};
+
 export const useInventoryCalendar = (hotelId: string, startDate: string, endDate: string) => {
   return useQuery({
     queryKey: ['inventory-calendar', hotelId, startDate, endDate],

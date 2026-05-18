@@ -19,7 +19,7 @@ export const Dashboard: React.FC = () => {
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <DashboardCards checkIns={0} checkOuts={0} occupancyRate={0} isLoading />
+        <DashboardCards hotelId={safeHotelId} checkIns={0} checkOuts={0} occupancyRate={0} isLoading />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Skeleton className="lg:col-span-2 h-96" />
           <Skeleton className="h-96" />
@@ -48,7 +48,7 @@ export const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold dark:text-white">Dashboard Overview</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">Real-time operational insights</p>
         </div>
-        <Link to="/rooms">
+        <Link to={`/hotel/${safeHotelId}/rooms`}>
           <Button className="gap-2">
             <Plus size={18} />
             Manage Rooms
@@ -81,6 +81,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Stats Cards */}
       <DashboardCards 
+        hotelId={safeHotelId}
         checkIns={dashboardData?.todayCheckIns || 0} 
         checkOuts={dashboardData?.todayCheckOuts || 0} 
         occupancyRate={dashboardData?.occupancy?.occupancyRate || 0} 
@@ -91,7 +92,7 @@ export const Dashboard: React.FC = () => {
         <Card className="lg:col-span-2 overflow-hidden !p-0">
           <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h3 className="text-xl font-bold dark:text-white">Occupancy Breakdown</h3>
-            <Link to="/inventory">
+            <Link to={`/hotel/${safeHotelId}/inventory`}>
               <Button variant="ghost" size="sm" className="gap-2">
                 Full Calendar <ArrowRight size={16} />
               </Button>
@@ -161,9 +162,11 @@ export const Dashboard: React.FC = () => {
                     <p className="text-sm font-bold dark:text-white truncate">{booking.guestName}</p>
                     <p className="text-xs text-slate-500 truncate">{booking.roomType}</p>
                   </div>
-                  <Badge variant="info" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    View
-                  </Badge>
+                  <Link to={`/hotel/${safeHotelId}/bookings?search=${booking.guestName}`}>
+                    <Badge variant="info" className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      View
+                    </Badge>
+                  </Link>
                 </div>
               ))
             ) : (
@@ -175,7 +178,7 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-          <Link to="/bookings?filter=upcoming" className="mt-8">
+          <Link to={`/hotel/${safeHotelId}/bookings?filter=upcoming`} className="mt-8">
             <Button variant="outline" className="w-full">See All Bookings</Button>
           </Link>
         </Card>

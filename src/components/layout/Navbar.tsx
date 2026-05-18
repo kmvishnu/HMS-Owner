@@ -9,10 +9,26 @@ interface NavbarProps {
   toggleTheme: () => void;
 }
 
+import { useHotelSettings } from '../../hooks/useHotelHooks';
+
+const HotelName: React.FC<{ hotelId: string }> = ({ hotelId }) => {
+  const { data: settings } = useHotelSettings(hotelId);
+  if (!settings?.hotel?.name) return null;
+  return (
+    <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg mr-2">
+      <Building size={14} className="text-primary" />
+      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{settings.hotel.name}</span>
+    </div>
+  );
+};
+
 export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, isDarkMode, toggleTheme }) => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  const pathParts = location.pathname.split('/');
+  const hotelId = pathParts[1] === 'hotel' ? pathParts[2] : null;
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -41,14 +57,10 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, isDarkMode, toggl
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        {/* <button className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-white dark:border-slate-900"></span>
-        </button> */}
-
         <div className="h-10 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2"></div>
 
         <div className="flex items-center gap-3 pl-2">
+          {hotelId && <HotelName hotelId={hotelId} />}
           <div className="text-right hidden sm:block">
             <p className="text-sm font-bold dark:text-white leading-none">{user?.name}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{user?.role?.replace('_', ' ')}</p>

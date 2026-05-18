@@ -7,12 +7,14 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
-  Clock
+  Clock,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 import { Card, Button, Badge, Skeleton } from '../../components/ui';
 import { BookingDetailsModal } from '../../components/hotel/BookingDetailsModal';
 import { useHotel } from '../../context/HotelContext';
-import { useHotelBookings } from '../../hooks/useHotelHooks';
+import { useHotelBookings, useCheckIn, useCheckOut } from '../../hooks/useHotelHooks';
 
 export const Bookings: React.FC = () => {
   const [filter, setFilter] = useState<'today' | 'upcoming' | 'checked-in' | 'completed'>('today');
@@ -23,6 +25,8 @@ export const Bookings: React.FC = () => {
   const safeHotelId = hotelId || '';
 
   const { data, isLoading } = useHotelBookings(safeHotelId, { filter });
+  const checkInMutation = useCheckIn(safeHotelId);
+  const checkOutMutation = useCheckOut(safeHotelId);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -38,6 +42,10 @@ export const Bookings: React.FC = () => {
     const nights = (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24);
     const n = Math.max(1, Math.round(nights));
     return `${n} Night${n > 1 ? 's' : ''}`;
+  };
+
+  const isExpired = (checkOutDate: string) => {
+    return new Date(checkOutDate).getTime() < new Date().getTime();
   };
 
   const handleRowClick = (booking: any) => {
@@ -173,7 +181,30 @@ export const Bookings: React.FC = () => {
                     ₹{booking.totalAmount}
                   </td>
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end items-center gap-2">
+                      {booking.status === 'CONFIRMED' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-8 gap-1.5 text-[10px] uppercase tracking-wider text-emerald-600 border-emerald-100 hover:bg-emerald-50"
+                          onClick={() => checkInMutation.mutate(booking.id)}
+                          isLoading={checkInMutation.isPending}
+                        >
+                          <LogIn size={14} /> Check In
+                        </Button>
+                      )}
+                      {booking.status === 'CHECKED_IN' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className={`h-8 gap-1.5 text-[10px] uppercase tracking-wider ${isExpired(booking.checkOut) ? 'text-red-600 border-red-100 bg-red-50 hover:bg-red-100 animate-pulse shadow-lg shadow-red-500/20' : 'text-blue-600 border-blue-100 hover:bg-blue-50'}`}
+                          onClick={() => checkOutMutation.mutate(booking.id)}
+                          isLoading={checkOutMutation.isPending}
+                          title={isExpired(booking.checkOut) ? 'Stay expired - please check out' : ''}
+                        >
+                          <LogOut size={14} /> Check Out
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" className="p-2" onClick={() => handleRowClick(booking)}>
                         <MoreHorizontal size={18} />
                       </Button>

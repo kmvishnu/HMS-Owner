@@ -38,6 +38,14 @@ export const hotelApi = {
     await apiClient.patch(`/hotel/${hotelId}/bookings/${bookingId}/notes`, { notes: notes.trim() });
   },
 
+  checkIn: async (hotelId: string, bookingId: string): Promise<void> => {
+    await apiClient.put(`/hotel/${hotelId}/bookings/${bookingId}/checkin`);
+  },
+
+  checkOut: async (hotelId: string, bookingId: string): Promise<void> => {
+    await apiClient.put(`/hotel/${hotelId}/bookings/${bookingId}/checkout`);
+  },
+
   getInventoryCalendar: async (hotelId: string, startDate: string, endDate: string): Promise<InventoryCalendarData> => {
     const response = await apiClient.get(`/hotel/${hotelId}/inventory/calendar`, {
       params: { startDate, endDate }
