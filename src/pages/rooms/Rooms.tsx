@@ -132,11 +132,23 @@ export const Rooms: React.FC = () => {
   };
 
   const getImageUrl = (room: any) => {
-    if (room.images?.[0]) {
-      return typeof room.images[0] === 'string' ? room.images[0] : room.images[0].url;
+    const apiBase = 'http://localhost:8081';
+    const imageData = room.images?.[0];
+    
+    if (!imageData) {
+      if (room.image_urls?.[0]) return room.image_urls[0];
+      return null;
     }
-    if (room.image_urls?.[0]) return room.image_urls[0];
-    return null;
+
+    const url = typeof imageData === 'string' ? imageData : (imageData.image_url || imageData.url);
+    
+    if (!url) return null;
+    
+    if (url.startsWith('/public')) {
+      return `${apiBase}${url}`;
+    }
+    
+    return url;
   };
 
   if (isLoading) return <div>Loading...</div>;

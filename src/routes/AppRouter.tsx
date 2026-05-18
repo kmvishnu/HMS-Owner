@@ -7,10 +7,11 @@ import { Dashboard } from '../pages/dashboard/Dashboard';
 import { Bookings } from '../pages/bookings/Bookings';
 import { Rooms } from '../pages/rooms/Rooms';
 import { Staff } from '../pages/staff/Staff';
-import { Settings } from '../pages/settings/Settings';
-import { Inventory } from '../pages/inventory/Inventory';
+import { Settings } from '../pages/hotel/Settings';
 import { HotelList } from '../pages/owner/HotelList';
 import { HotelProvider } from '../context/HotelContext';
+import { InventoryCalendar } from '../pages/hotel/InventoryCalendar';
+import { Analytics } from '../pages/hotel/Analytics';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ 
   children
@@ -78,7 +79,12 @@ export const AppRouter: React.FC = () => {
         } />
         <Route path="inventory" element={
           <ProtectedRoute>
-            <Inventory />
+            <InventoryCalendar />
+          </ProtectedRoute>
+        } />
+        <Route path="analytics" element={
+          <ProtectedRoute>
+            <Analytics />
           </ProtectedRoute>
         } />
         <Route path="settings" element={

@@ -9,7 +9,8 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
-  Hotel
+  Hotel,
+  TrendingUp
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { hasPermission } from '../../config/permissions';
@@ -32,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
     { name: 'Bookings', icon: CalendarCheck, path: `/hotel/${hotelId}/bookings`, permission: 'view_bookings', isScoped: true },
     { name: 'Rooms', icon: BedDouble, path: `/hotel/${hotelId}/rooms`, permission: 'view_bookings', isScoped: true },
     { name: 'Inventory', icon: Package, path: `/hotel/${hotelId}/inventory`, permission: 'manage_inventory', isScoped: true },
+    { name: 'Analytics', icon: TrendingUp, path: `/hotel/${hotelId}/analytics`, permission: 'view_bookings', isScoped: true },
     { name: 'Staff', icon: Users, path: '/staff', permission: 'manage_staff', isScoped: false },
     { name: 'Settings', icon: Settings, path: `/hotel/${hotelId}/settings`, permission: 'view_settings', isScoped: true },
   ].filter(item => hasPermission(role, item.permission as any) && (!item.isScoped || hotelId));
