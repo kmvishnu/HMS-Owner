@@ -202,7 +202,6 @@ export const Staff: React.FC = () => {
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Role</label>
                 <select name="role" className="input-field appearance-none bg-no-repeat bg-right pr-10" defaultValue={editingStaff?.role || "HOTEL_STAFF"}>
                   <option value="HOTEL_STAFF">Hotel Staff</option>
-                  <option value="HOTEL_OWNER">Hotel Owner</option>
                 </select>
               </div>
 

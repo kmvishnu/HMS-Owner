@@ -5,7 +5,7 @@ import {
   Edit2, 
   Trash2, 
   Image as ImageIcon, 
-  DollarSign, 
+  IndianRupee, 
   Hash,
   X,
   Upload
@@ -185,7 +185,7 @@ export const Rooms: React.FC = () => {
               <h3 className="text-xl font-bold dark:text-white">{room.name}</h3>
               <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500 flex items-center gap-1.5"><DollarSign size={14} /> Price per night</span>
+                  <span className="text-slate-500 flex items-center gap-1.5"><IndianRupee size={14} /> Price per night</span>
                   <span className="font-bold text-primary">₹{room.price}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -257,7 +257,7 @@ export const Rooms: React.FC = () => {
                     {/* Existing Images */}
                     {editingRoom?.images?.map((img: any) => (
                       <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 group">
-                        <img src={typeof img === 'string' ? img : img.url} alt="Room" className="w-full h-full object-cover" />
+                        <img src={typeof img === 'string' ? img : img.image_url} alt="Room" className="w-full h-full object-cover" />
                         <button 
                           type="button"
                           onClick={() => apiClient.delete(`/hotel/${hotelId}/room-types/images/${img.id || img}`).then(() => queryClient.invalidateQueries({ queryKey: ['room-types', hotelId] }))}
